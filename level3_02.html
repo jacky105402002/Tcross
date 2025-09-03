@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8" />
+    <title>關卡三｜遊戲提示</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <link rel="stylesheet" href="./css/level3.css" />
+    <style>
+      /* —— 讓文字在 hint.png 框內「上下左右置中」 —— */
+      .hint-box {
+        position: relative;
+        width: min(1000px, 86vw);
+        margin: 0 auto;
+      }
+      .hint-frame {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      /* 這個層的 inset 依你的 hint.png 內框調整邊界（避免碰到邊） */
+      .hint-text {
+        position: absolute;
+        inset: 9% 5% 12% 5%; /* 上右下左的安全邊距，可微調 */
+        display: grid;
+        place-items: center; /* 水平 + 垂直置中「內容盒」 */
+        text-align: left; /* 內容仍保持左對齊（像範例圖） */
+      }
+      /* 真正放文字的容器，控制最大寬與字體大小 */
+      .hint-text .inner {
+        max-width: 68%;
+        font-size: clamp(13px, 1.6vw, 20px);
+        line-height: 1.8;
+        color: #333;
+      }
+      .hint-text .inner strong {
+        color: #d4371c;
+      }
+      /* 將確認鈕縮小並置於底部（若已在 level3.css 設定 .btn-row 可沿用） */
+      .btn-row {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 6vh;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .btn-row .img-btn {
+        pointer-events: auto;
+      }
+      .img-btn img {
+        width: min(180px, 18vw);
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-wrap plain-bg">
+      <div class="hint-board">
+        <h1 class="hint-title">遊戲提示說明</h1>
+
+        <div class="hint-box">
+          <img class="hint-frame" src="./image/hint.png" alt="提示框" />
+          <!-- 這個區塊會被 grid 置中到提示框正中央 -->
+          <div class="hint-text">
+            <div class="inner">
+              你來到了陽光夜市，夜市今天舉辦了一個活動，邀請大家幫忙環保餐具。
+              <strong
+                >在 90 秒內選到環保餐具加分，若選到一次性餐具則減分。</strong
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下方按鈕 -->
+    <div class="btn-row">
+      <button class="img-btn" id="btn-confirm-2">
+        <img src="./image/check_off.png" alt="確認" />
+      </button>
+    </div>
+
+    <!-- 手機直式遮罩 -->
+    <div class="rotate-mask" id="rotateMask">
+      <div class="rotate-box"><p>請將裝置旋轉為橫向以獲得最佳體驗</p></div>
+    </div>
+
+    <script src="./js/level3.js"></script>
+    <script>
+      // 必須先通過第 1 頁
+      requireCookieOrBack("level3_01", "./level3_01.html");
+
+      bindPressSwap(
+        "#btn-confirm-2",
+        "./image/check_on.png",
+        "./image/check_off.png",
+        () => {
+          setCookie("level3_02", "true", { path: "/", sameSite: "Lax" });
+          location.href = "./level3_03.html";
+        }
+      );
+      handleOrientationMask();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,140 @@
+/* 全域：滿版不可捲動 */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  background: #000;
+}
+
+/* 外層容器：置中 + 安全區 */
+.game-wrap {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 前導頁背景（圖二） */
+.bg-prelude {
+  background: url("../image/prelude.jpg") center/cover no-repeat;
+}
+
+/* 第二、三頁：簡單素色（可自行替換） */
+.plain-bg {
+  background: #f6fbff;
+}
+
+/* 中央內容 */
+.center-area {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* 圖片按鈕樣式 */
+.img-btn {
+  display: inline-block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.img-btn img {
+  display: block;
+  width: min(180px, 18vw); /* 原本 220px → 改小一些 */
+}
+
+/* 專門把按鈕固定在下方置中 */
+.btn-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6vh; /* 想再低一點就調這裡，例如 4vh */
+  display: grid;
+  place-items: center;
+  pointer-events: none; /* 讓容器不吃事件 */
+}
+.btn-row .img-btn {
+  pointer-events: auto;
+}
+
+@media (min-width: 1280px) {
+  .img-btn img {
+    width: 160px;
+  }
+}
+
+/* 提示頁結構 */
+.hint-board {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  place-items: center;
+  gap: 20px;
+  padding: 28px 36px;
+}
+.hint-title {
+  margin: 0;
+  font-size: clamp(20px, 3.8vw, 40px);
+  color: #333;
+  letter-spacing: 2px;
+}
+.hint-box {
+  position: relative;
+  width: min(1000px, 86vw);
+}
+.hint-frame {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.hint-text {
+  position: absolute;
+  inset: 12% 8% 18% 8%; /* 依 hint.png 的內框調整 */
+  display: flex;
+  align-items: center; /* 垂直置中 */
+  justify-content: center; /* 水平置中 */
+  text-align: center;
+
+  font-size: clamp(14px, 1.8vw, 22px);
+  line-height: 1.8;
+  color: #333;
+}
+.hint-text strong {
+  color: #d4371c;
+}
+
+/* 直式旋轉提示（手機/平板直向時覆蓋） */
+.rotate-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  display: none;
+  z-index: 9999;
+}
+.rotate-box {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 24px;
+  font-size: clamp(18px, 3vw, 28px);
+}
+
+/* 大螢幕（電腦）維持全畫面 */
+@media (min-width: 1025px) {
+  .img-btn img {
+    width: 220px;
+  }
+}
