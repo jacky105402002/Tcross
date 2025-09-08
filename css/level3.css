@@ -20,7 +20,11 @@ body {
 
 /* 前導頁背景（圖二） */
 .bg-prelude {
-  background: url("../image/prelude.jpg") center/cover no-repeat;
+  background-image: url("../image/prelude.png");
+  background-size: 100% auto; /* 寬度等於視窗寬，高度等比 */
+  background-repeat: no-repeat; /* 不重複 */
+  background-position: top center; /* 往上靠 */
+  background-color: #fff; /* 露出的底色＝白色 */
 }
 
 /* 第二、三頁：簡單素色（可自行替換） */
