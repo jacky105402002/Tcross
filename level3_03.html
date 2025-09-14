@@ -9,118 +9,108 @@
     />
     <link rel="stylesheet" href="./css/level3.css" />
     <style>
-      /* === 背景佈局 === */
-      .bg-game {
-        background: #fff url("./image/background-all.png") center center / cover
-          no-repeat;
-      }
-      /* 若你的檔名是 .png，改上一行網址為 background-all.png 即可 */
-
-      /* 整個舞台層：滿版，元素以百分比定位 */
       .stage {
         position: absolute;
         inset: 0;
       }
-
-      /* 90 秒倒數圓形徽章（位置在左上角計時器處） */
-      .timer-badge {
-        position: absolute;
-        left: 2.2%;
-        top: 6%;
-        width: min(92px, 10vw);
-        aspect-ratio: 1 / 1;
-        border-radius: 50%;
-        background: transparent;
-        display: grid;
-        place-items: center;
-        font-weight: 800;
-        font-size: clamp(18px, 5vw, 36px);
-        color: #d60000;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        user-select: none;
-      }
-
-      /* 生成點（紅點位置），用百分比固定在背景上相對位置 */
       .spawn {
         position: absolute;
-        width: min(100px, 10.5vw); /* 可調整圈圈大小 */
+        width: var(--slot-size, 110px);
         transform: translate(-50%, -50%);
-        display: none; /* 預設不顯示，出現時再打開 */
+        display: none;
         z-index: 3;
+        pointer-events: none;
       }
-      .spawn img {
+      .spawn > img {
         width: 100%;
         height: auto;
         display: block;
-        pointer-events: auto; /* 接收點擊 */
+        pointer-events: auto;
         -webkit-user-drag: none;
         user-select: none;
         touch-action: manipulation;
       }
 
-      /* （可選）左上顯示目前得分，方便測試 */
-      .score-pill {
+      @media (min-width: 1600px) {
+        .spawn {
+          --slot-size: 120px;
+        }
+      }
+      @media (max-width: 1440px) {
+        .spawn {
+          --slot-size: 95px;
+        }
+      }
+      @media (max-width: 1280px) {
+        .spawn {
+          --slot-size: 88px;
+        }
+      }
+
+      body.show-hotspots .spawn::before {
+        content: "";
         position: absolute;
-        left: 50%;
-        top: 80%;
-        background: rgba(0, 0, 0, 0.45);
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: clamp(12px, 2.4vw, 16px);
-        user-select: none;
+        inset: 0;
+        border-radius: 50%;
+        outline: 3px solid rgba(255, 0, 0, 0.9);
+        background: rgba(255, 0, 0, 0.15);
+        pointer-events: none;
       }
     </style>
   </head>
   <body>
     <div class="game-wrap bg-game">
       <div class="stage" id="stage">
-        <!-- 倒數計時 -->
         <div class="timer-badge" id="timer">90</div>
         <div class="score-pill" id="scorePill">分數：0</div>
 
-        <!-- 5 個出現點（座標可微調） -->
-        <!-- 1. 左邊飲料攤 -->
-        <div class="spawn" id="spawn-1" style="left: 26%; top: 40%"></div>
-        <!-- 2. 中間攤位（左） -->
-        <div class="spawn" id="spawn-2" style="left: 46%; top: 41%"></div>
-        <!-- 3. 中間攤位（右） -->
-        <div class="spawn" id="spawn-3" style="left: 57%; top: 41%"></div>
-        <!-- 4. 右邊攤位 -->
-        <div class="spawn" id="spawn-4" style="left: 78%; top: 39%"></div>
-        <!-- 5. 左前景（較低一點，讓畫面更活） -->
-        <div class="spawn" id="spawn-5" style="left: 36%; top: 63%"></div>
+        <div class="spawn slot-1" id="spawn-1"></div>
+        <div class="spawn slot-2" id="spawn-2"></div>
+        <div class="spawn slot-3" id="spawn-3"></div>
+        <div class="spawn slot-4" id="spawn-4"></div>
+        <div class="spawn slot-5" id="spawn-5"></div>
+        <div class="spawn slot-6" id="spawn-6"></div>
       </div>
     </div>
 
-    <!-- 手機直式遮罩 -->
     <div class="rotate-mask" id="rotateMask">
       <div class="rotate-box"><p>請將裝置旋轉為橫向以獲得最佳體驗</p></div>
     </div>
 
     <script src="./js/level3.js"></script>
     <script>
-      // 需要經過頁面 1 & 2
+      const DEBUG_HOTSPOTS = false;
+      if (DEBUG_HOTSPOTS) document.body.classList.add("show-hotspots");
+
       requireCookieOrBack("level3_01", "./level3_01.html");
       requireCookieOrBack("level3_02", "./level3_02.html");
-
       handleOrientationMask();
 
-      /* ===== 遊戲參數（好調整） ===== */
-      const GAME_SECONDS = 90; // 倒數秒數
-      const SHOW_MS = 2000; // 單次出現時間（毫秒）
-      const GAP_MS = 0; // 每次隱藏後的間隔（毫秒）
-      const ADD_SCORE = 1; // 點 add_* 加幾分
-      const CUT_SCORE = -1; // 點 cut_* 扣幾分（負數）
+      /* 遊戲參數 */
+      const GAME_SECONDS = 90;
+      const SHOW_MS = 2000;
+      const GAP_MS = 0;
 
-      // add/cut 圖片檔名
-      const addImgs = [1, 2, 3, 4, 5].map((n) => `./image/add_${n}.png`);
-      const cutImgs = [1, 2, 3, 4, 5].map((n) => `./image/cut_${n}.png`);
-
-      // 預載圖片，避免首次顯示卡頓
-      [...addImgs, ...cutImgs].forEach((src) => {
+      /* 權重表：每張圖自己的分數 */
+      const ADD_ITEMS = [
+        { src: "./image/add_1.png", score: +2 },
+        { src: "./image/add_2.png", score: +2 },
+        { src: "./image/add_3.png", score: +2 },
+        { src: "./image/add_4.png", score: +3 },
+        { src: "./image/add_5.png", score: +3 },
+        { src: "./image/add_6.png", score: +3 },
+      ];
+      const CUT_ITEMS = [
+        { src: "./image/cut_1.png", score: -1 },
+        { src: "./image/cut_2.png", score: -1 },
+        { src: "./image/cut_3.png", score: -1 },
+        { src: "./image/cut_4.png", score: -1 },
+        { src: "./image/cut_5.png", score: -1 },
+        { src: "./image/cut_6.png", score: -2 },
+      ];
+      [...ADD_ITEMS, ...CUT_ITEMS].forEach((it) => {
         const i = new Image();
-        i.src = src;
+        i.src = it.src;
       });
 
       const spawns = [...document.querySelectorAll(".spawn")];
@@ -128,17 +118,17 @@
       const scorePill = document.getElementById("scorePill");
 
       let score = 0;
+      let addSum = 0; // 環保餐具分數（加總正分）
+      let cutSumNeg = 0; // 一次性餐具分數（加總負分，最後取絕對值）
       let timeLeft = GAME_SECONDS;
       let playing = true;
       let spawnTimer = null;
       let tickTimer = null;
 
-      // 更新分數顯示
       function refreshScore() {
         scorePill.textContent = `分數：${score}`;
       }
 
-      // 倒數計時
       function startCountdown() {
         timerEl.textContent = timeLeft;
         tickTimer = setInterval(() => {
@@ -152,54 +142,46 @@
         }, 1000);
       }
 
-      // 隨機從陣列取一個
       const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-      // 產生一個目標於其中一個 spawn 上
       function showOne() {
         if (!playing) return;
-
-        // 先全部關閉
         spawns.forEach((s) => {
           s.style.display = "none";
-          s.replaceChildren(); // 移除舊 img，避免殘留事件
+          s.replaceChildren();
         });
 
         const target = pick(spawns);
-        const isAdd = Math.random() < 0.5; // 50% add / 50% cut（之後可調）
-        const imgSrc = isAdd ? pick(addImgs) : pick(cutImgs);
+        const isAdd = Math.random() < 0.5;
+        const item = isAdd ? pick(ADD_ITEMS) : pick(CUT_ITEMS);
 
         const img = document.createElement("img");
-        img.src = imgSrc;
-        img.alt = isAdd ? "加分" : "扣分";
-        img.dataset.type = isAdd ? "add" : "cut";
+        img.src = item.src;
+        img.alt =
+          item.score > 0 ? `加 ${item.score}` : `扣 ${Math.abs(item.score)}`;
+        img.dataset.delta = String(item.score);
         img.addEventListener("pointerdown", onHit, { once: true });
 
         target.appendChild(img);
         target.style.display = "block";
 
-        // 顯示 SHOW_MS 後關閉，接著下一輪
         spawnTimer = setTimeout(() => {
           target.style.display = "none";
           target.replaceChildren();
           if (!playing) return;
-          if (GAP_MS > 0) {
-            setTimeout(showOne, GAP_MS);
-          } else {
-            showOne();
-          }
+          if (GAP_MS > 0) setTimeout(showOne, GAP_MS);
+          else showOne();
         }, SHOW_MS);
       }
 
-      // 點到圖片的處理
       function onHit(e) {
-        const type = e.currentTarget.dataset.type;
         if (!playing) return;
-        if (type === "add") score += ADD_SCORE;
-        else score += CUT_SCORE;
+        const delta = Number(e.currentTarget.dataset.delta || 0);
+        score += delta;
+        if (delta > 0) addSum += delta;
+        else cutSumNeg += delta; // delta 是負數，先累加，結算時取 Math.abs
         refreshScore();
 
-        // 立即把目前目標關掉
         const parent = e.currentTarget.parentElement;
         if (parent) {
           parent.style.display = "none";
@@ -207,23 +189,28 @@
         }
       }
 
-      // 時間到：寫 cookie 並前往下一頁
       function gameOver() {
         playing = false;
         if (spawnTimer) clearTimeout(spawnTimer);
         if (tickTimer) clearInterval(tickTimer);
 
-        // 分數寫到 cookie
+        // 寫入 cookie：總分、兩邊的加總
         setCookie("level3_score", String(score), {
           path: "/",
           sameSite: "Lax",
         });
+        setCookie("level3_add_sum", String(addSum), {
+          path: "/",
+          sameSite: "Lax",
+        });
+        setCookie("level3_cut_sum_abs", String(Math.abs(cutSumNeg)), {
+          path: "/",
+          sameSite: "Lax",
+        });
 
-        // 下一頁（之後你會加上）
         location.href = "./level3_04.html";
       }
 
-      // 啟動
       refreshScore();
       startCountdown();
       showOne();
