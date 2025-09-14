@@ -18,13 +18,93 @@ body {
   height: 100vh;
 }
 
-/* 前導頁背景（圖二） */
+/* 前導頁背景*/
 .bg-prelude {
-  background-image: url("../image/prelude.png");
+  background-image: url("../image/1920x1080/prelude.png");
   background-size: 100% auto; /* 寬度等於視窗寬，高度等比 */
   background-repeat: no-repeat; /* 不重複 */
   background-position: top center; /* 往上靠 */
   background-color: #fff; /* 露出的底色＝白色 */
+}
+
+.bg-02 {
+  background-image: url("../image/1920x1080/02.png");
+  background-size: 100% auto; /* 寬度等於視窗寬，高度等比 */
+}
+
+.bg-game {
+  background: #fff url("../image/1920x1080/03.png") center center / cover
+    no-repeat;
+}
+
+.score-pill {
+  position: absolute;
+  left: 50%;
+  top: 80%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  padding: 20px 40px;
+  border-radius: 999px;
+  font-size: 32px;
+  user-select: none;
+}
+
+.timer-badge {
+  position: absolute;
+  left: 4.6%;
+  top: 16.3%;
+  width: min(92px, 10vw);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 54px;
+  color: #d60000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+.slot-1 {
+  left: 15%;
+  top: 38%;
+} /* 珍珠奶茶 攤位左圓 */
+.slot-2 {
+  left: 29%;
+  top: 33%;
+} /* 珍珠奶茶 攤位右圓 */
+.slot-3 {
+  left: 45%;
+  top: 31%;
+} /* 滷肉飯 左圓 */
+.slot-4 {
+  left: 61.8%;
+  top: 30%;
+} /* 滷肉飯 右圓 */
+.slot-5 {
+  left: 73%;
+  top: 27%;
+} /* 米粉湯 圓 */
+.slot-6 {
+  left: 67%;
+  top: 70%;
+} /* 陽光小炒（右下牌位區） */
+
+#num-cut {
+  left: 36%;
+  top: 52%;
+  font-size: 60px;
+}
+#num-add {
+  left: 64%;
+  top: 52%;
+  font-size: 60px;
+}
+.total {
+  left: 50%;
+  top: 70%;
+  font-size: 60px;
 }
 
 /*電腦*/
