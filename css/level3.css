@@ -49,10 +49,10 @@ body {
   user-select: none;
 }
 
-.timer-badge {
+/* .timer-badge {
   position: absolute;
   left: 4.6%;
-  top: 16.3%;
+  top: 10.3%;
   width: min(92px, 10vw);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
@@ -64,7 +64,7 @@ body {
   color: #d60000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   user-select: none;
-}
+} */
 
 .slot-1 {
   left: 15%;
@@ -140,7 +140,7 @@ body {
   .timer-badge {
     position: absolute;
     left: 4.6%;
-    top: 16.3%;
+    top: 10.3%;
     width: min(92px, 10vw);
     aspect-ratio: 1 / 1;
     border-radius: 50%;

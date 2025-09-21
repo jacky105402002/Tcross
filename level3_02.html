@@ -54,6 +54,7 @@
         "./image/check_on.png",
         "./image/check_off.png",
         () => {
+          attachAutoFullscreen('#btn-confirm-2');   // ← 也綁一次，避免上一頁被阻擋
           setCookie("level3_02", "true", { path: "/", sameSite: "Lax" });
           location.href = "./level3_03.html";
         }

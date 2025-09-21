@@ -210,10 +210,21 @@
 
         location.href = "./level3_04.html";
       }
-
+      attachAutoFullscreen(); // 不傳 target → 綁 document
       refreshScore();
       startCountdown();
       showOne();
+
+      document.addEventListener("fullscreenchange", () => {
+        const badge = document.querySelector(".timer-badge");
+        if (!document.fullscreenElement) {
+          // 尚未開啟全螢幕 → 改成 10.3%
+          badge.style.top = "10.3%";
+        } else {
+          // 已進入全螢幕 → 用原本的 16.3%
+          badge.style.top = "16.3%";
+        }
+      });
     </script>
   </body>
 </html>

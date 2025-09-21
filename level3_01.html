@@ -34,7 +34,15 @@
         "#btn-confirm",
         "./image/check_on.png",
         "./image/check_off.png",
-        () => {
+        async () => {
+          // 直接在使用者這次點擊手勢中請全螢幕
+          try {
+            await enterFullscreen(document.documentElement);
+          } catch (e) {
+            /* 失敗就忽略 */
+          }
+
+          // 設 cookie 然後前往下一頁
           setCookie("level3_01", "true", { path: "/", sameSite: "Lax" });
           location.href = "./level3_02.html";
         }

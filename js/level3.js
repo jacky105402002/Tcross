@@ -135,6 +135,61 @@ function handleOrientationMask() {
   window.addEventListener("resize", check);
 }
 
+/* ===== Fullscreen helpers ===== */
+function isFullscreen() {
+  return !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement
+  );
+}
+
+function enterFullscreen(el = document.documentElement) {
+  const req =
+    el.requestFullscreen ||
+    el.webkitRequestFullscreen ||
+    el.msRequestFullscreen;
+  return req
+    ? req.call(el)
+    : Promise.reject(new Error("Fullscreen not supported"));
+}
+
+/**
+ * 在第一次「點擊/觸控」時嘗試全螢幕。
+ * @param {string|Element|null} target 綁定事件的目標；不傳就綁整個 document
+ */
+function attachAutoFullscreen(target = null) {
+  const el =
+    typeof target === "string"
+      ? document.querySelector(target)
+      : target || document;
+
+  if (!el) return;
+
+  const handler = () => {
+    if (!isFullscreen()) {
+      enterFullscreen(document.documentElement).catch(() => {
+        /* 使用者或瀏覽器拒絕就忽略 */
+      });
+    }
+  };
+
+  // 只嘗試一次，避免干擾你的其他點擊
+  const onceWrap = (e) => {
+    handler();
+    el.removeEventListener("click", onceWrap);
+    el.removeEventListener("touchend", onceWrap);
+  };
+
+  el.addEventListener("click", onceWrap, { once: true });
+  el.addEventListener("touchend", onceWrap, { once: true, passive: true });
+}
+
+/* 讓其他頁面也能呼叫 */
+window.isFullscreen = isFullscreen;
+window.enterFullscreen = enterFullscreen;
+window.attachAutoFullscreen = attachAutoFullscreen;
+
 /* ===== 導出到全域（若需要在 inline script 直接呼叫） ===== */
 window.setCookie = setCookie;
 window.getCookie = getCookie;
