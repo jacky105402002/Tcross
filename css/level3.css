@@ -194,6 +194,11 @@ body {
     top: 70%;
     font-size: 60px;
   }
+
+  /* 非全螢幕時 */
+  .not-fullscreen .total {
+    top: 73% !important;
+  }
 }
 
 /*桌機*/

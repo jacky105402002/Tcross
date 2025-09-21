@@ -109,6 +109,65 @@
       );
 
       attachAutoFullscreen(); // 不傳 target → 綁 document
+
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement) {
+          document.body.classList.add("not-fullscreen");
+        } else {
+          document.body.classList.remove("not-fullscreen");
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        console.log("fullscreenchange", document.fullscreenElement);
+      });
+    </script>
+    <script>
+      // 判斷是否全螢幕（含各家前綴）
+      function isFullscreen() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement ||
+          document.mozFullScreenElement
+        );
+      }
+
+      // 根據是否全螢幕，切換 body 的 class
+      function syncFullscreenClass() {
+        const fs = isFullscreen();
+        document.body.classList.toggle("not-fullscreen", !fs);
+        // 可選：檢查狀態
+        // console.log('[fs]', fs ? 'fullscreen' : 'not-fullscreen');
+      }
+
+      // 初始化：先視為非全螢幕
+      document.body.classList.add("not-fullscreen");
+      // DOM 準備好先同步一次（避免快取或延遲）
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", syncFullscreenClass, {
+          once: true,
+        });
+      } else {
+        syncFullscreenClass();
+      }
+
+      // 監聽各種 fullscreen 事件（跨瀏覽器）
+      [
+        "fullscreenchange",
+        "webkitfullscreenchange",
+        "msfullscreenchange",
+        "mozfullscreenchange",
+      ].forEach((evt) => document.addEventListener(evt, syncFullscreenClass));
+
+      // 後備：某些裝置不支援全螢幕事件，就靠視窗變化同步
+      window.addEventListener("resize", syncFullscreenClass);
+      window.addEventListener("orientationchange", syncFullscreenClass);
+
+      // 若你在別處有呼叫 enterFullscreen() 的地方，也可以在成功後手動同步一次
+      // 例如：
+      // await enterFullscreen(document.documentElement).catch(() => {});
+      // syncFullscreenClass();
     </script>
   </body>
 </html>
