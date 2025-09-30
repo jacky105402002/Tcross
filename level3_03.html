@@ -211,20 +211,37 @@
         location.href = "./level3_04.html";
       }
       attachAutoFullscreen(); // 不傳 target → 綁 document
+
+      // 依全螢幕狀態更新計時徽章位置
+      function updateTimerBadgeTop() {
+        const badge = document.querySelector(".timer-badge");
+        if (!badge) return;
+        const isFS = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+        );
+        // 若你的 CSS 有 !important，可改用這行：
+        // badge.style.setProperty('top', isFS ? '16.3%' : '10.3%', 'important');
+        badge.style.top = isFS ? "16.3%" : "10.3%";
+      }
+
+      // 先掛事件
+      document.addEventListener("fullscreenchange", updateTimerBadgeTop);
+      document.addEventListener("webkitfullscreenchange", updateTimerBadgeTop); // Safari
+      document.addEventListener("msfullscreenchange", updateTimerBadgeTop); // 舊 Edge
+
+      // **關鍵：進頁面就先判斷一次**
+      // 確保 DOM 有了再跑，三重保險：立即、DOMContentLoaded、下一幀
+      updateTimerBadgeTop();
+      document.addEventListener("DOMContentLoaded", updateTimerBadgeTop, {
+        once: true,
+      });
+      requestAnimationFrame(updateTimerBadgeTop);
+
       refreshScore();
       startCountdown();
       showOne();
-
-      document.addEventListener("fullscreenchange", () => {
-        const badge = document.querySelector(".timer-badge");
-        if (!document.fullscreenElement) {
-          // 尚未開啟全螢幕 → 改成 10.3%
-          badge.style.top = "10.3%";
-        } else {
-          // 已進入全螢幕 → 用原本的 16.3%
-          badge.style.top = "16.3%";
-        }
-      });
     </script>
   </body>
 </html>
