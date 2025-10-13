@@ -88,33 +88,42 @@
           return a;
         });
         let idx = 0;
+
         return {
           play() {
             const a = pool[idx];
+            // 讓同一個音效可快速重播
             try {
               a.currentTime = 0;
             } catch (e) {}
             a.play().catch(() => {});
             idx = (idx + 1) % pool.length;
           },
+          /** 首次手勢解鎖用：在使用者第一次點擊時，無聲播放一下再停 */
           prime() {
             const a = pool[0];
-            const v = a.volume;
+            const oldVol = a.volume;
             a.volume = 0;
             a.play()
               .then(() => {
                 a.pause();
                 a.currentTime = 0;
-                a.volume = v;
+                a.volume = oldVol;
               })
-              .catch(() => {});
+              .catch(() => {
+                // 有些瀏覽器就算在手勢中也可能丟錯，忽略即可
+              });
           },
         };
       }
+
+      // 建兩個池：成功音/失敗音
       const SFX = {
         success: makeSfxPool("./image/success.wav", 6),
         error: makeSfxPool("./image/error.wav", 6),
       };
+
+      // 一次性手勢解鎖（iOS/Safari 等需要）
       function unlockAudioOnce() {
         SFX.success.prime();
         SFX.error.prime();
@@ -135,8 +144,8 @@
 
       /* 遊戲參數 */
       const GAME_SECONDS = 90;
-      const SHOW_MS = 2000; // 每個物件顯示時間
-      // 每秒間隔由倒數計時器主導，不另外用 GAP_MS
+      const SHOW_MS = 2000;
+      const GAP_MS = 0;
 
       /* 權重表：每張圖自己的分數 */
       const ADD_ITEMS = [
@@ -165,41 +174,40 @@
       const scorePill = document.getElementById("scorePill");
 
       let score = 0;
-      let addSum = 0; // 加分總和
-      let cutSumNeg = 0; // 扣分總和（負數，結算取絕對值）
+      let addSum = 0; // 環保餐具分數（加總正分）
+      let cutSumNeg = 0; // 一次性餐具分數（加總負分，最後取絕對值）
       let timeLeft = GAME_SECONDS;
       let playing = true;
+      let spawnTimer = null;
       let tickTimer = null;
-
-      // 追蹤所有「清除圖片的 timeout」，以便結束時清掉
-      const clearTimers = new Set();
 
       function refreshScore() {
         scorePill.textContent = `分數：${score}`;
       }
 
-      // 隨機整數（含上下界）
-      const randInt = (min, max) =>
-        min + Math.floor(Math.random() * (max - min + 1));
-      const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-      // 取得目前空的槽位（沒有子節點）
-      const getEmptySpawns = () => spawns.filter((s) => !s.firstElementChild);
-
-      // 依已經過的秒數決定該秒要丟多少個
-      function getCountForElapsed(elapsed) {
-        // elapsed: 0..89
-        if (elapsed < 30) return randInt(1, 2); // 第 1 組（0~29s）
-        else if (elapsed < 60) return randInt(2, 3); // 第 2 組（30~59s）
-        else return randInt(3, 5); // 第 3 組（60~89s）
+      function startCountdown() {
+        timerEl.textContent = timeLeft;
+        tickTimer = setInterval(() => {
+          timeLeft -= 1;
+          if (timeLeft <= 0) {
+            timerEl.textContent = 0;
+            gameOver();
+            return;
+          }
+          timerEl.textContent = timeLeft;
+        }, 1000);
       }
 
-      // 在一個空槽位生成 1 個目標
-      function spawnOne() {
-        const empties = getEmptySpawns();
-        if (!empties.length) return false; // 沒空位就略過
+      const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-        const slot = pick(empties);
+      function showOne() {
+        if (!playing) return;
+        spawns.forEach((s) => {
+          s.style.display = "none";
+          s.replaceChildren();
+        });
+
+        const target = pick(spawns);
         const isAdd = Math.random() < 0.5;
         const item = isAdd ? pick(ADD_ITEMS) : pick(CUT_ITEMS);
 
@@ -210,73 +218,31 @@
         img.dataset.delta = String(item.score);
         img.addEventListener("pointerdown", onHit, { once: true });
 
-        slot.appendChild(img);
-        slot.style.display = "block";
+        target.appendChild(img);
+        target.style.display = "block";
 
-        // SHOW_MS 後自動清除該槽位（若還沒被點掉）
-        const t = setTimeout(() => {
-          // 若還在且還有這張圖才清
-          if (slot.firstElementChild === img) {
-            slot.replaceChildren();
-            slot.style.display = "none";
-          }
-          clearTimers.delete(t);
+        spawnTimer = setTimeout(() => {
+          target.style.display = "none";
+          target.replaceChildren();
+          if (!playing) return;
+          if (GAP_MS > 0) setTimeout(showOne, GAP_MS);
+          else showOne();
         }, SHOW_MS);
-        clearTimers.add(t);
-
-        return true;
-      }
-
-      // 該秒回合：依階段丟出 N 個
-      function spawnRound(elapsed) {
-        if (!playing) return;
-        const count = getCountForElapsed(elapsed);
-        for (let i = 0; i < count; i++) {
-          // 盡量丟；若槽位用完就提早結束
-          if (!spawnOne()) break;
-        }
-      }
-
-      function startCountdown() {
-        // 進場先顯示當前秒的回合（elapsed = 0）
-        timerEl.textContent = timeLeft;
-        spawnRound(0);
-
-        const ROUND_INTERVAL = 2000; // 每回合間隔 2 秒
-        tickTimer = setInterval(() => {
-          timeLeft -= ROUND_INTERVAL / 1000; // 每次減 2 秒
-          if (timeLeft <= 0) {
-            timerEl.textContent = 0;
-            gameOver();
-            return;
-          }
-
-          timerEl.textContent = Math.ceil(timeLeft);
-          const elapsed = GAME_SECONDS - timeLeft;
-          spawnRound(elapsed);
-        }, ROUND_INTERVAL);
       }
 
       function onHit(e) {
         if (!playing) return;
-
         const delta = Number(e.currentTarget.dataset.delta || 0);
         score += delta;
-
-        // 音效 + 分數
         if (delta > 0) {
           addSum += delta;
-          SFX.success.play();
+          SFX.success.play(); // ← 加分播成功音
         } else {
-          cutSumNeg += delta;
-          SFX.error.play();
+          cutSumNeg += delta; // delta 為負
+          SFX.error.play(); // ← 扣分播失敗音
         }
         refreshScore();
 
-        // 描邊文字提示（白字＋綠/紅描邊）
-        showScoreHint(e, delta);
-
-        // 移除被點擊的圖像
         const parent = e.currentTarget.parentElement;
         if (parent) {
           parent.style.display = "none";
@@ -284,48 +250,10 @@
         }
       }
 
-      function showScoreHint(event, delta) {
-        const hint = document.createElement("div");
-        hint.className = "score-hint " + (delta > 0 ? "pos" : "neg");
-        hint.textContent = delta > 0 ? `+${delta}` : `${delta}`;
-
-        document.body.appendChild(hint);
-
-        // 以點擊位置為中心顯示
-        const x =
-          event.clientX ?? (event.touches && event.touches[0]?.clientX) ?? 0;
-        const y =
-          event.clientY ?? (event.touches && event.touches[0]?.clientY) ?? 0;
-        hint.style.left = `${x}px`;
-        hint.style.top = `${y}px`;
-
-        // 進場（淡入＋上飄）
-        requestAnimationFrame(() => {
-          hint.style.opacity = "1";
-          hint.style.transform = "translate(-50%, calc(-50% - 30px))";
-        });
-
-        // 0.5 秒後淡出並移除
-        setTimeout(() => {
-          hint.style.opacity = "0";
-          hint.style.transform = "translate(-50%, calc(-50% - 60px))";
-          setTimeout(() => hint.remove(), 250);
-        }, 500);
-      }
-
       function gameOver() {
         playing = false;
+        if (spawnTimer) clearTimeout(spawnTimer);
         if (tickTimer) clearInterval(tickTimer);
-
-        // 清掉所有尚未觸發的清理 timeout
-        for (const t of clearTimers) clearTimeout(t);
-        clearTimers.clear();
-
-        // 收掉場上殘留
-        spawns.forEach((s) => {
-          s.replaceChildren();
-          s.style.display = "none";
-        });
 
         // 寫入 cookie：總分、兩邊的加總
         setCookie("level3_score", String(score), {
@@ -343,7 +271,6 @@
 
         location.href = "./level3_04.html";
       }
-
       attachAutoFullscreen(); // 不傳 target → 綁 document
 
       // 依全螢幕狀態更新計時徽章位置
@@ -355,11 +282,18 @@
           document.webkitFullscreenElement ||
           document.msFullscreenElement
         );
+        // 若你的 CSS 有 !important，可改用這行：
+        // badge.style.setProperty('top', isFS ? '16.3%' : '10.3%', 'important');
         badge.style.top = isFS ? "16.3%" : "10.3%";
       }
+
+      // 先掛事件
       document.addEventListener("fullscreenchange", updateTimerBadgeTop);
-      document.addEventListener("webkitfullscreenchange", updateTimerBadgeTop);
-      document.addEventListener("msfullscreenchange", updateTimerBadgeTop);
+      document.addEventListener("webkitfullscreenchange", updateTimerBadgeTop); // Safari
+      document.addEventListener("msfullscreenchange", updateTimerBadgeTop); // 舊 Edge
+
+      // **關鍵：進頁面就先判斷一次**
+      // 確保 DOM 有了再跑，三重保險：立即、DOMContentLoaded、下一幀
       updateTimerBadgeTop();
       document.addEventListener("DOMContentLoaded", updateTimerBadgeTop, {
         once: true,
@@ -368,6 +302,7 @@
 
       refreshScore();
       startCountdown();
+      showOne();
     </script>
   </body>
 </html>

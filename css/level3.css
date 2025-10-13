@@ -549,3 +549,82 @@ body {
     width: 220px;
   }
 }
+
+/* === 游標最小補丁：確保整個畫面都用同一個游標 === */
+/* PNG + CUR 做雙重備援；6 2 為熱點可微調 */
+:root {
+  --cursor-img: url("../image/mouse.png") 6 2, url("../image/mouse.cur"), auto;
+}
+
+/* 讓根節點與覆蓋整頁的容器都強制使用自訂游標 */
+html, body,
+.game-wrap,          /* 你整頁的外層容器 */
+.stage,              /* 遊戲舞台（若有） */
+.btn-row,            /* 底部按鈕容器 */
+.rotate-mask {
+  /* 直式遮罩整層 */
+  cursor: var(--cursor-img) !important;
+}
+
+/* 全部子節點預設「繼承」上層游標，避免被 UA/元件 reset 成 auto/pointer */
+*,
+*::before,
+*::after {
+  cursor: inherit !important;
+}
+
+/* 只有輸入框保留 I-beam（你沒有表單的話可刪） */
+input,
+textarea {
+  cursor: text !important;
+}
+
+/* 文字描邊提示：白字 + 描邊，非圓形框 */
+.score-hint {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  /* 你要的大約 150x150 視覺量體 → 用字級控制 */
+  font-size: 72px; /* 可依需求調整 */
+  font-weight: 700;
+  line-height: 1;
+  color: #fff; /* 文字填色 */
+  pointer-events: none;
+  z-index: 9999;
+
+  /* 動畫 */
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+
+  /* WebKit 真描邊 */
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: #20c76f; /* 預設綠描邊（正分） */
+
+  /* 其它瀏覽器的描邊退場方案：多層陰影疊出描邊 */
+  text-shadow: 1px 0 0 #20c76f, -1px 0 0 #20c76f, 0 1px 0 #20c76f,
+    0 -1px 0 #20c76f, 1px 1px 0 #20c76f, -1px 1px 0 #20c76f, 1px -1px 0 #20c76f,
+    -1px -1px 0 #20c76f, 2px 0 0 #20c76f, -2px 0 0 #20c76f, 0 2px 0 #20c76f,
+    0 -2px 0 #20c76f;
+
+  /* 讓白字更立體一點（可選） */
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.2));
+}
+
+/* 正分：綠描邊 */
+.score-hint.pos {
+  -webkit-text-stroke-color: #20c76f;
+  text-shadow: 1px 0 0 #20c76f, -1px 0 0 #20c76f, 0 1px 0 #20c76f,
+    0 -1px 0 #20c76f, 1px 1px 0 #20c76f, -1px 1px 0 #20c76f, 1px -1px 0 #20c76f,
+    -1px -1px 0 #20c76f, 2px 0 0 #20c76f, -2px 0 0 #20c76f, 0 2px 0 #20c76f,
+    0 -2px 0 #20c76f;
+}
+
+/* 負分：紅描邊 */
+.score-hint.neg {
+  -webkit-text-stroke-color: #e53935;
+  text-shadow: 1px 0 0 #e53935, -1px 0 0 #e53935, 0 1px 0 #e53935,
+    0 -1px 0 #e53935, 1px 1px 0 #e53935, -1px 1px 0 #e53935, 1px -1px 0 #e53935,
+    -1px -1px 0 #e53935, 2px 0 0 #e53935, -2px 0 0 #e53935, 0 2px 0 #e53935,
+    0 -2px 0 #e53935;
+}
